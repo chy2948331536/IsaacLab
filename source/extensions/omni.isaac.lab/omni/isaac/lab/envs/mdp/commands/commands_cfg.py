@@ -36,6 +36,8 @@ class UniformVelocityCommandCfg(CommandTermCfg):
     asset_name: str = MISSING
     """Name of the asset in the environment for which the commands are generated."""
     heading_command: bool = MISSING
+
+    gamepad: bool = True
     """Whether to use heading command or angular velocity command.
 
     If True, the angular velocity command is computed from the heading error, where the

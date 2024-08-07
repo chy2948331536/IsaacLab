@@ -16,7 +16,7 @@ from omni.isaac.lab.assets import Articulation
 from omni.isaac.lab.managers import CommandTerm
 from omni.isaac.lab.markers import VisualizationMarkers
 from omni.isaac.lab.markers.config import BLUE_ARROW_X_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
-
+import pygame
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedEnv
 
@@ -53,7 +53,18 @@ class UniformVelocityCommand(CommandTerm):
         """
         # initialize the base class
         super().__init__(cfg, env)
-
+        if self.cfg.gamepad:
+            pygame.init()
+            # 初始化手柄
+            pygame.joystick.init()
+            # 检查是否有连接的手柄
+            if pygame.joystick.get_count() == 0:
+                print("没有检测到任何手柄。")
+                exit()
+            else:
+                self.joystick = pygame.joystick.Joystick(0)
+                self.joystick.init()
+                print(f"检测到手柄：{self.joystick.get_name()}")
         # obtain the robot asset
         # -- robot
         self.robot: Articulation = env.scene[cfg.asset_name]
@@ -128,6 +139,25 @@ class UniformVelocityCommand(CommandTerm):
         velocity from heading direction if the heading_command flag is set.
         """
         # Compute angular velocity from heading direction
+        if self.cfg.gamepad:
+            pygame.event.pump()
+            self.button_state = {
+                'axes': [self.joystick.get_axis(i) for i in range(self.joystick.get_numaxes())],
+                'buttons': [self.joystick.get_button(i) for i in range(self.joystick.get_numbuttons())],
+                'hats': [self.joystick.get_hat(i) for i in range(self.joystick.get_numhats())]
+            }
+            # print("轴状态:", state['axes'])
+            # print("按钮状态:", state['buttons'])
+            # print("帽状态:", state['hats'])
+            # if self.down_up:
+            #     self.reset_buf = torch.ones_like(self.reset_buf)
+            #     env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
+            #     self.reset_idx(env_ids)
+            self.vel_command_b[:, 0] = torch.clip(torch.tensor(-self.button_state['axes'][1]*2),min=self.cfg.ranges.lin_vel_x[0],max=self.cfg.ranges.lin_vel_x[1]).to(device=self.device)
+            self.vel_command_b[:, 1] = torch.clip(torch.tensor(-self.button_state['axes'][0]*1.5),min=self.cfg.ranges.lin_vel_y[0],max=self.cfg.ranges.lin_vel_y[1]).to(device=self.device)
+            self.vel_command_b[:, 2] = torch.clip(torch.tensor(-self.button_state['axes'][3]*2),min=self.cfg.ranges.ang_vel_z[0],max=self.cfg.ranges.ang_vel_z[1]).to(device=self.device) 
+            self.is_fast_command = (torch.norm(self.vel_command_b[:, :3], dim=1) > 0.2).unsqueeze(1)
+            return
         if self.cfg.heading_command:
             # resolve indices of heading envs
             env_ids = self.is_heading_env.nonzero(as_tuple=False).flatten()
