@@ -5,7 +5,8 @@
 
 import math
 from dataclasses import MISSING
-
+import os
+import sys
 import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.assets import ArticulationCfg, AssetBaseCfg
 from omni.isaac.lab.envs import ManagerBasedRLEnvCfg
@@ -99,6 +100,7 @@ class CommandsCfg:
         heading_command=True,
         heading_control_stiffness=0.5,
         debug_vis=True,
+        gamepad = os.path.basename(sys.argv[0]) == "play.py",
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
             lin_vel_x=(-1.0, 1.0), lin_vel_y=(-1.0, 1.0), ang_vel_z=(-1.0, 1.0), heading=(-math.pi, math.pi)
         ),
