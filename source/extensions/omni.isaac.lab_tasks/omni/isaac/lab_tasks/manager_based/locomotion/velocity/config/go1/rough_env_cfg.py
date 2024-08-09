@@ -6,7 +6,7 @@
 from omni.isaac.lab.utils import configclass
 
 from omni.isaac.lab_tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg
-
+from omni.isaac.lab_tasks.manager_based.locomotion.velocity.velocity_env_pmtg_cfg import LocomotionVelocityPMTGRoughEnvCfg
 ##
 # Pre-defined configs
 ##
@@ -14,7 +14,7 @@ from omni.isaac.lab_assets.unitree import UNITREE_GO1_CFG  # isort: skip
 
 
 @configclass
-class UnitreeGo1RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
+class UnitreeGo1RoughEnvCfg(LocomotionVelocityPMTGRoughEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
@@ -27,7 +27,7 @@ class UnitreeGo1RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_step = 0.01
 
         # reduce action scale
-        self.actions.joint_pos.scale = 0.25
+        self.actions.joint_pos_pmtg.scale = 0.25
 
         # event
         self.events.push_robot = None
@@ -58,6 +58,11 @@ class UnitreeGo1RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
 
         # terminations
         self.terminations.base_contact.params["sensor_cfg"].body_names = "base"
+        # hangon
+        # self.scene.robot.spawn.usd_path = 'source/extensions/omni.isaac.lab_assets/data/Robots/unitree/go1_hang.usd'
+        # self.scene.robot.init_state.pos=(0.0, 0.0, 1.0)
+        # self.events.reset_robot_joints = None
+        # self.events.reset_base = None
 
 
 @configclass

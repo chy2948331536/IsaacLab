@@ -185,6 +185,7 @@ class ActionManager(ManagerBase):
         super().__init__(cfg, env)
         # create buffers to store actions
         self._action = torch.zeros((self.num_envs, self.total_action_dim), device=self.device)
+        self._processed_actions = torch.zeros((self.num_envs, self.total_processed_action_dim), device=self.device)
         self._prev_action = torch.zeros_like(self._action)
 
         self.cfg.debug_vis = False
@@ -219,6 +220,11 @@ class ActionManager(ManagerBase):
     def total_action_dim(self) -> int:
         """Total dimension of actions."""
         return sum(self.action_term_dim)
+    
+    @property
+    def total_processed_action_dim(self) -> int:
+        """Total dimension of actions."""
+        return sum(self.processed_action_term_dim)
 
     @property
     def active_terms(self) -> list[str]:
@@ -229,6 +235,11 @@ class ActionManager(ManagerBase):
     def action_term_dim(self) -> list[int]:
         """Shape of each action term."""
         return [term.action_dim for term in self._terms.values()]
+    
+    @property
+    def processed_action_term_dim(self) -> list[int]:
+        """Shape of each action term."""
+        return [term.processed_actions.shape[1] for term in self._terms.values()]
 
     @property
     def action(self) -> torch.Tensor:
@@ -239,6 +250,11 @@ class ActionManager(ManagerBase):
     def prev_action(self) -> torch.Tensor:
         """The previous actions sent to the environment. Shape is (num_envs, total_action_dim)."""
         return self._prev_action
+
+    @property
+    def processed_action(self) -> torch.Tensor:
+        """The previous actions sent to the environment. Shape is (num_envs, total_action_dim)."""
+        return self._processed_actions
 
     @property
     def has_debug_vis_implementation(self) -> bool:
@@ -301,12 +317,12 @@ class ActionManager(ManagerBase):
         # store the input actions
         self._prev_action[:] = self._action
         self._action[:] = action.to(self.device)
-
         # split the actions and apply to each tensor
         idx = 0
         for term in self._terms.values():
             term_actions = action[:, idx : idx + term.action_dim]
             term.process_actions(term_actions)
+            self._processed_actions[:, idx : idx + term.action_dim] = term.processed_actions
             idx += term.action_dim
 
     def apply_action(self) -> None:

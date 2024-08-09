@@ -54,7 +54,7 @@ class JointAction(ActionTerm):
     def __init__(self, cfg: actions_cfg.JointActionCfg, env: ManagerBasedEnv) -> None:
         # initialize the action term
         super().__init__(cfg, env)
-
+        self.pmtg_action_dim = 16
         # resolve the joints over which the action term is applied
         self._joint_ids, self._joint_names = self._asset.find_joints(self.cfg.joint_names)
         self._num_joints = len(self._joint_ids)
@@ -69,8 +69,8 @@ class JointAction(ActionTerm):
             self._joint_ids = slice(None)
 
         # create tensors for raw and processed actions
-        self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
-        self._processed_actions = torch.zeros_like(self.raw_actions)
+        self._raw_actions = torch.zeros(self.num_envs, self.pmtg_action_dim, device=self.device)
+        self._processed_actions = torch.zeros(self.num_envs, self._num_joints, device=self.device)
 
         # parse scale
         if isinstance(cfg.scale, (float, int)):
@@ -128,6 +128,41 @@ class JointPositionAction(JointAction):
 
     cfg: actions_cfg.JointPositionActionCfg
     """The configuration of the action term."""
+
+    def __init__(self, cfg: actions_cfg.JointPositionActionCfg, env: ManagerBasedEnv):
+        # initialize the action term
+        super().__init__(cfg, env)
+        # use default joint positions as offset
+        if cfg.use_default_offset:
+            self._offset = self._asset.data.default_joint_pos[:, self._joint_ids].clone()
+
+    def apply_actions(self):
+        # set position targets
+        self._asset.set_joint_position_target(self.processed_actions, joint_ids=self._joint_ids)
+
+class JointPMTGPositionAction(JointAction):
+    """Joint action term that applies the processed actions to the articulation's joints as position commands."""
+    @property
+    def action_dim(self) -> int:
+        return self.pmtg_action_dim
+
+    # @property
+    # def raw_actions(self) -> torch.Tensor:
+    #     return self._raw_actions
+
+    # @property
+    # def processed_actions(self) -> torch.Tensor:
+    #     return self._processed_actions
+
+    cfg: actions_cfg.JointPositionPMTGActionCfg
+    """The configuration of the action term."""
+
+    def process_actions(self, actions: torch.Tensor):
+        # store the raw actions
+        self._raw_actions[:] = actions
+        # apply the affine transformations
+        self._processed_actions = self._raw_actions[:,:12] * self._scale + self._offset
+        
 
     def __init__(self, cfg: actions_cfg.JointPositionActionCfg, env: ManagerBasedEnv):
         # initialize the action term
