@@ -14,7 +14,8 @@ import carb
 import omni.isaac.lab.utils.string as string_utils
 from omni.isaac.lab.assets.articulation import Articulation
 from omni.isaac.lab.managers.action_manager import ActionTerm
-
+from omni.isaac.lab.utils import configclass
+from .PMTrajectoryGenerator import PMTrajectoryGenerator
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedEnv
 
@@ -156,13 +157,40 @@ class JointPMTGPositionAction(JointAction):
 
     cfg: actions_cfg.JointPositionPMTGActionCfg
     """The configuration of the action term."""
+    @configclass
+    class PMTGCfg:
+        gait_type = 'trot'
+        consider_foothold = False
+        z_updown_height_func = ["cubic_up", "cubic_down"]
+        max_horizontal_offset = 0.0
+        train_mode = True
+        duty_factor = 0.6
+        base_frequency = 1.5
+        max_clearance = 0.09
+        body_height = 0.327
+        stand_after_walk = False
+
+    def clock(self):
+        return self._env.sim.current_time
 
     def process_actions(self, actions: torch.Tensor):
         # store the raw actions
         self._raw_actions[:] = actions
+        self.delta_phi = actions[:, :4]
+        self.residual_angle = actions[:, 4:]
+        delta_phi = actions[:, :4] * self.delta_phi_scale
+        residual_angle = actions[:, 4:] * self.residual_angle_scale
+        residual_xyz = torch.zeros(self.num_envs, 12).to(self.device)
+        self.base_quat = self._env.scene["robot"].data.root_quat_w
+        self.base_quat = self.base_quat[:, [1, 2, 3, 0]]
+        pmtg_joints = self.pmtg.get_action(delta_phi,
+                                               residual_xyz,
+                                               residual_angle,
+                                               self.base_quat,
+                                               command=None)
         # apply the affine transformations
-        self._processed_actions = self._raw_actions[:,:12] * self._scale + self._offset
-        
+        self._processed_actions = pmtg_joints
+        # print(self._env.sim.current_time)
 
     def __init__(self, cfg: actions_cfg.JointPositionActionCfg, env: ManagerBasedEnv):
         # initialize the action term
@@ -170,6 +198,15 @@ class JointPMTGPositionAction(JointAction):
         # use default joint positions as offset
         if cfg.use_default_offset:
             self._offset = self._asset.data.default_joint_pos[:, self._joint_ids].clone()
+        self.delta_phi_scale = 0.2
+        self.residual_angle_scale = 0.2
+        self.pmtg_cfg = JointPMTGPositionAction.PMTGCfg()
+        self.pmtg = PMTrajectoryGenerator(robot=None,
+                                          clock=self.clock,
+                                          num_envs=self.num_envs,
+                                          device=self._env.device,
+                                          param=self.pmtg_cfg,
+                                          task_name=self._env.scene.cfg.robot.spawn.usd_path)
 
     def apply_actions(self):
         # set position targets
