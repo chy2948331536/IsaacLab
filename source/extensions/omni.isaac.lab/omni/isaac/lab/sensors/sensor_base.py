@@ -53,7 +53,7 @@ class SensorBase(ABC):
         # flag for whether the sensor is initialized
         self._is_initialized = False
         # flag for whether the sensor is in visualization mode
-        self._is_visualizing = False
+        self._is_visualizing = True
 
         # note: Use weakref on callbacks to ensure that this object can be deleted when its destructor is called.
         # add callbacks for stage play/stop

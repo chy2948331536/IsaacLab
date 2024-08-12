@@ -91,14 +91,14 @@ def main():
     # reset environment
     obs, _ = env.get_observations()
     # simulate environment
-    actions = policy(obs)
+    # actions = policy(obs)
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
-            # actions = policy(obs)
+            actions = policy(obs)
             # env stepping
-            obs, _, _, _ = env.step(torch.zeros_like(actions))
+            obs, _, _, _ = env.step(actions)
             # obs, _, _, _ = env.step(actions)
     # close the simulator
     env.close()

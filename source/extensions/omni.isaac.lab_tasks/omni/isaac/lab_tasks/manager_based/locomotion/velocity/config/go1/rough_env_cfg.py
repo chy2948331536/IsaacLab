@@ -59,10 +59,10 @@ class UnitreeGo1RoughEnvCfg(LocomotionVelocityPMTGRoughEnvCfg):
         # terminations
         self.terminations.base_contact.params["sensor_cfg"].body_names = "base"
         # hangon
-        self.scene.robot.spawn.usd_path = 'source/extensions/omni.isaac.lab_assets/data/Robots/unitree/go1_hang.usd'
-        self.scene.robot.init_state.pos=(0.0, 0.0, 1.0)
-        self.events.reset_robot_joints = None
-        self.events.reset_base = None
+        # self.scene.robot.spawn.usd_path = 'source/extensions/omni.isaac.lab_assets/data/Robots/unitree/go1_hang.usd'
+        # self.scene.robot.init_state.pos=(0.0, 0.0, 1.0)
+        # self.events.reset_robot_joints = None
+        # self.events.reset_base = None
 
 
 @configclass
