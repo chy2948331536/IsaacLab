@@ -76,6 +76,8 @@ class UnitreeGo1RoughEnvCfg_PLAY(UnitreeGo1RoughEnvCfg):
         self.scene.env_spacing = 2.5
         # spawn the robot randomly in the grid (instead of their terrain levels)
         self.scene.terrain.max_init_terrain_level = None
+        self.scene.height_scanner.debug_vis = True
+        self.commands.base_velocity.debug_vis = True
         # reduce the number of terrains to save memory
         if self.scene.terrain.terrain_generator is not None:
             self.scene.terrain.terrain_generator.num_rows = 5
