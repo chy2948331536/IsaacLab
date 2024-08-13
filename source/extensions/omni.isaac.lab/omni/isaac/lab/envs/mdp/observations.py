@@ -18,6 +18,7 @@ import omni.isaac.lab.utils.math as math_utils
 from omni.isaac.lab.assets import Articulation, RigidObject
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.sensors import RayCaster
+from omni.isaac.lab.sensors import ContactSensor
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedEnv, ManagerBasedRLEnv
@@ -27,7 +28,13 @@ Root state.
 """
 def materials(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     asset: Articulation = env.scene[asset_cfg.name]
-    return asset.data.materials[:,0,:]
+    return asset.data.materials[:,0,:].to(env.device)
+
+def feet_force_z(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg,scale = 0.01) -> torch.Tensor:
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    net_contact_forces = contact_sensor.data.net_forces_w
+    # compute the violation
+    return net_contact_forces[:,sensor_cfg.body_ids,2].to(env.device)*scale
 
 def base_pos_z(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root height in the simulation world frame."""

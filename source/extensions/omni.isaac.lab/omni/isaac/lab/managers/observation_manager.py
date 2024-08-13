@@ -185,6 +185,8 @@ class ObservationManager(ManagerBase):
             # Ref: https://robosuite.ai/docs/modules/sensors.html#observables
             # add value to list
             group_obs[name] = obs
+        # if group_name == "privilege":
+        #     print(group_obs)
         # concatenate all observations in the group together
         if self._group_obs_concatenate[group_name]:
             return torch.cat(list(group_obs.values()), dim=-1)
