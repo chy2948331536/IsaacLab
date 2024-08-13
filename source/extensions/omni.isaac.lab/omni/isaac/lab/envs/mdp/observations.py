@@ -25,7 +25,9 @@ if TYPE_CHECKING:
 """
 Root state.
 """
-
+def materials(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    return asset.data.materials[:,0,:]
 
 def base_pos_z(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root height in the simulation world frame."""

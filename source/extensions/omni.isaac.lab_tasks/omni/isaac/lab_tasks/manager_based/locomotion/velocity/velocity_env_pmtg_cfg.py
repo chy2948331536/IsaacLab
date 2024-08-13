@@ -53,6 +53,7 @@ class MySceneCfg(InteractiveSceneCfg):
             restitution_combine_mode="multiply",
             static_friction=1.0,
             dynamic_friction=1.0,
+            restitution = 1.0,
         ),
         visual_material=sim_utils.MdlFileCfg(
             mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/TilesMarbleSpiderWhiteBrickBondHoned.mdl",
@@ -179,6 +180,17 @@ class ObservationsCfg:
             self.concatenate_terms = True
     # observation groups
     critic: CriticCfg = CriticCfg()
+
+    @configclass
+    class PrivilegeCfg(ObsGroup):
+        # observation terms (order preserved)
+        materials = ObsTerm(func=mdp.materials, noise=None)
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = True
+    # observation groups
+    privilege: PrivilegeCfg = PrivilegeCfg()
+
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -190,8 +202,8 @@ class EventCfg:
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
             "static_friction_range": (0.8, 0.8),
-            "dynamic_friction_range": (0.6, 0.6),
-            "restitution_range": (0.0, 0.0),
+            "dynamic_friction_range": (0.2, 1.0),
+            "restitution_range": (0.2, 1.0),
             "num_buckets": 64,
         },
     )

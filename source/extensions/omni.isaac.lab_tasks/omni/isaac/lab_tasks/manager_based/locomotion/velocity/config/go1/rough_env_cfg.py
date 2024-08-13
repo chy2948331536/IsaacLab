@@ -89,3 +89,9 @@ class UnitreeGo1RoughEnvCfg_PLAY(UnitreeGo1RoughEnvCfg):
         # remove random pushing event
         self.events.base_external_force_torque = None
         self.events.push_robot = None
+
+        #高处摔落
+        # self.events.reset_robot_joints = None
+        # self.events.reset_base = None
+        # self.scene.robot.init_state.pos=(0.0, 0.0, 10.0)
+        # self.scene.robot.init_state.rot=(0.0, 1.0, 0.0, 0.0)

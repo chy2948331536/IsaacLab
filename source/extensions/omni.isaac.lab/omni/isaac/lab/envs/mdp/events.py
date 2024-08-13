@@ -95,31 +95,37 @@ def randomize_rigid_body_material(
         buckets = torch.tensor([(hi[d] - lo[d]) * i / num_buckets + lo[d] for i in range(num_buckets)], device="cpu")
         material_samples[..., d] = buckets[torch.searchsorted(buckets, material_samples[..., d].contiguous()) - 1]
 
+    num_envs = material_samples.shape[0]
+    num_bodies = material_samples.shape[1]
+    num_properties = material_samples.shape[2]
+    random_materials = torch.rand(num_envs, num_properties) * (torch.tensor(hi) - torch.tensor(lo)) + torch.tensor(lo)
+    materials = random_materials.unsqueeze(1).repeat(1, num_bodies, 1)
     # update material buffer with new samples
-    if isinstance(asset, Articulation) and asset_cfg.body_ids != slice(None):
-        # obtain number of shapes per body (needed for indexing the material properties correctly)
-        # note: this is a workaround since the Articulation does not provide a direct way to obtain the number of shapes
-        #  per body. We use the physics simulation view to obtain the number of shapes per body.
-        num_shapes_per_body = []
-        for link_path in asset.root_physx_view.link_paths[0]:
-            link_physx_view = asset._physics_sim_view.create_rigid_body_view(link_path)  # type: ignore
-            num_shapes_per_body.append(link_physx_view.max_shapes)
+    # if isinstance(asset, Articulation) and asset_cfg.body_ids != slice(None):
+    #     # obtain number of shapes per body (needed for indexing the material properties correctly)
+    #     # note: this is a workaround since the Articulation does not provide a direct way to obtain the number of shapes
+    #     #  per body. We use the physics simulation view to obtain the number of shapes per body.
+    #     num_shapes_per_body = []
+    #     for link_path in asset.root_physx_view.link_paths[0]:
+    #         link_physx_view = asset._physics_sim_view.create_rigid_body_view(link_path)  # type: ignore
+    #         num_shapes_per_body.append(link_physx_view.max_shapes)
 
-        # sample material properties from the given ranges
-        for body_id in asset_cfg.body_ids:
-            # start index of shape
-            start_idx = sum(num_shapes_per_body[:body_id])
-            # end index of shape
-            end_idx = start_idx + num_shapes_per_body[body_id]
-            # assign the new materials
-            # material ids are of shape: num_env_ids x num_shapes
-            # material_buckets are of shape: num_buckets x 3
-            materials[env_ids, start_idx:end_idx] = material_samples[:, start_idx:end_idx]
-    else:
-        materials[env_ids] = material_samples
+    #     # sample material properties from the given ranges
+    #     for body_id in asset_cfg.body_ids:
+    #         # start index of shape
+    #         start_idx = sum(num_shapes_per_body[:body_id])
+    #         # end index of shape
+    #         end_idx = start_idx + num_shapes_per_body[body_id]
+    #         # assign the new materials
+    #         # material ids are of shape: num_env_ids x num_shapes
+    #         # material_buckets are of shape: num_buckets x 3
+    #         materials[env_ids, start_idx:end_idx] = material_samples[:, start_idx:end_idx]
+    # else:
+    #     materials[env_ids] = material_samples
 
     # apply to simulation
     asset.root_physx_view.set_material_properties(materials, env_ids)
+    asset.data.materials = materials
 
 
 def randomize_rigid_body_mass(
