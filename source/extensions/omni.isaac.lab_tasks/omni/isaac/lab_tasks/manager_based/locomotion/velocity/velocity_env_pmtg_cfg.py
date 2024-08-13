@@ -68,7 +68,7 @@ class MySceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Robot/base",
         offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
         attach_yaw_only=True,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.3, 1.0]),
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.0, 0.7]),
         debug_vis=False,
         mesh_prim_paths=["/World/ground"],
     )
@@ -121,7 +121,6 @@ class ObservationsCfg:
     @configclass
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
-
         # observation terms (order preserved)
         base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
@@ -130,16 +129,17 @@ class ObservationsCfg:
             noise=Unoise(n_min=-0.05, n_max=0.05),
         )
         velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
+        last_last_joint_pos_rel = ObsTerm(func=mdp.last_last_joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
+        last_joint_pos_rel = ObsTerm(func=mdp.last_joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
         joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
+        # last_last_joint_pos_rel = ObsTerm(func=mdp.last_last_joint_pos_rel, noise=None)
+        # last_joint_pos_rel = ObsTerm(func=mdp.last_joint_pos_rel, noise=None)
+        # joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=None)
+        last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=Unoise(n_min=-1.5, n_max=1.5))
         joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
+        # last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=None)
+        # joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=None)
         actions = ObsTerm(func=mdp.last_processed_action, params={"action_name": "joint_pos_pmtg"})
-        height_scan = ObsTerm(
-            func=mdp.height_scan,
-            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
-            noise=Unoise(n_min=-0.1, n_max=0.1),
-            clip=(-1.0, 1.0),
-        )
-
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = True
@@ -147,7 +147,38 @@ class ObservationsCfg:
     # observation groups
     policy: PolicyCfg = PolicyCfg()
 
-
+    @configclass
+    class CriticCfg(ObsGroup):
+        # observation terms (order preserved)
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel, noise=Unoise(n_min=-0.1, n_max=0.1))
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, noise=Unoise(n_min=-0.2, n_max=0.2))
+        projected_gravity = ObsTerm(
+            func=mdp.projected_gravity,
+            noise=Unoise(n_min=-0.05, n_max=0.05),
+        )
+        velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
+        last_last_joint_pos_rel = ObsTerm(func=mdp.last_last_joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
+        last_joint_pos_rel = ObsTerm(func=mdp.last_joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
+        # last_last_joint_pos_rel = ObsTerm(func=mdp.last_last_joint_pos_rel, noise=None)
+        # last_joint_pos_rel = ObsTerm(func=mdp.last_joint_pos_rel, noise=None)
+        # joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=None)
+        last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=Unoise(n_min=-1.5, n_max=1.5))
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
+        # last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=None)
+        # joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=None)
+        actions = ObsTerm(func=mdp.last_processed_action, params={"action_name": "joint_pos_pmtg"})
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            noise=None,
+            clip=(-1.0, 1.0),
+        )
+        def __post_init__(self):
+            self.enable_corruption = True
+            self.concatenate_terms = True
+    # observation groups
+    critic: CriticCfg = CriticCfg()
 @configclass
 class EventCfg:
     """Configuration for events."""

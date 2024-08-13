@@ -47,9 +47,15 @@ class ArticulationData(RigidObjectData):
 
         # Initialize the lazy buffers.
         self._body_state_w = TimestampedBuffer()
+
         self._joint_pos = TimestampedBuffer()
+        self._last_joint_pos = TimestampedBuffer()
+        self._last_last_joint_pos = TimestampedBuffer()
+
         self._joint_acc = TimestampedBuffer()
+
         self._joint_vel = TimestampedBuffer()
+        self._last_joint_vel = TimestampedBuffer()
 
     def update(self, dt: float):
         self._sim_timestamp += dt
@@ -292,6 +298,26 @@ class ArticulationData(RigidObjectData):
         return self._joint_pos.data
 
     @property
+    def last_joint_pos(self):
+        if self._last_joint_pos.data == None:
+            return self._root_physx_view.get_dof_positions()
+        return self._last_joint_pos.data
+    
+    @last_joint_pos.setter
+    def last_joint_pos(self, value):
+        self._last_joint_pos.data = value
+
+    @property
+    def last_last_joint_pos(self):
+        if self._last_last_joint_pos.data == None:
+            return self._root_physx_view.get_dof_positions()
+        return self._last_last_joint_pos.data
+    
+    @last_last_joint_pos.setter
+    def last_last_joint_pos(self, value):
+        self._last_last_joint_pos.data = value
+    
+    @property
     def joint_vel(self):
         """Joint velocities of all joints. Shape is (num_instances, num_joints)."""
         if self._joint_vel.timestamp < self._sim_timestamp:
@@ -299,6 +325,16 @@ class ArticulationData(RigidObjectData):
             self._joint_vel.data = self._root_physx_view.get_dof_velocities()
             self._joint_vel.timestamp = self._sim_timestamp
         return self._joint_vel.data
+    
+    @property
+    def last_joint_vel(self):
+        if self._last_joint_vel.data == None:
+            return self._root_physx_view.get_dof_velocities()
+        return self._last_joint_vel.data
+    
+    @last_joint_vel.setter
+    def last_joint_vel(self, value):
+        self._last_joint_vel.data = value
 
     @property
     def joint_acc(self):

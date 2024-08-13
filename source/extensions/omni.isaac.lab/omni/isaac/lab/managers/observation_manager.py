@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING
 
 from .manager_base import ManagerBase, ManagerTermBase
 from .manager_term_cfg import ObservationGroupCfg, ObservationTermCfg
-
+from omni.isaac.lab.assets import RigidObject,ArticulationData
+import copy
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedEnv
 
@@ -124,6 +125,10 @@ class ObservationManager(ManagerBase):
         for group_name in self._group_obs_term_names:
             obs_buffer[group_name] = self.compute_group(group_name)
         # otherwise return a dict with observations of all groups
+        data:ArticulationData = self._env.scene["robot"].data
+        data.last_last_joint_pos = copy.deepcopy(data.last_joint_pos)
+        data.last_joint_pos = copy.deepcopy(data.joint_pos)
+        data.last_joint_vel = copy.deepcopy(data.joint_vel)
         return obs_buffer
 
     def compute_group(self, group_name: str) -> torch.Tensor | dict[str, torch.Tensor]:
