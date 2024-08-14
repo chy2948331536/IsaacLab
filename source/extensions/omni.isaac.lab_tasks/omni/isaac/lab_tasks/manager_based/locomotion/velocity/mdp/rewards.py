@@ -130,9 +130,11 @@ def feet_xyz(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("
     return torch.square(asset.data.root_lin_vel_b[:, 2])
 
 def delta_phi(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
-    asset: RigidObject = env.scene[asset_cfg.name]
-    return torch.square(asset.data.root_lin_vel_b[:, 2])
+    pmtg_term = env.action_manager.get_term("joint_pos_pmtg")
+    delta_phi_norm = torch.norm(pmtg_term.delta_phi, dim=-1)
+    return delta_phi_norm
 
 def residual_angle(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
-    asset: RigidObject = env.scene[asset_cfg.name]
-    return torch.square(asset.data.root_lin_vel_b[:, 2])
+    pmtg_term = env.action_manager.get_term("joint_pos_pmtg")
+    residual_angle_norm = torch.norm(pmtg_term.residual_angle, dim=-1)
+    return residual_angle_norm
