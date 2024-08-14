@@ -15,15 +15,17 @@ class UnitreeGo1FlatEnvCfg(UnitreeGo1RoughEnvCfg):
         super().__post_init__()
 
         # override rewards
-        self.rewards.flat_orientation_l2.weight = -2.5
-        self.rewards.feet_air_time.weight = 0.25
+        # self.rewards.flat_orientation_l2.weight = -2.5
+        # self.rewards.feet_air_time.weight = 0.25
 
         # change terrain to flat
         self.scene.terrain.terrain_type = "plane"
         self.scene.terrain.terrain_generator = None
         # no height scan
-        self.scene.height_scanner = None
-        self.observations.policy.height_scan = None
+        # self.scene.height_scanner = None
+        # self.observations.policy.height_scan = None
+        # self.observations.critic.height_scan = None
+        # self.observations.heights = None
         # no terrain curriculum
         self.curriculum.terrain_levels = None
 
