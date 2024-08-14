@@ -239,8 +239,8 @@ class PMTrajectoryGenerator:
         Returns:
             target_joint_angles: joint angle of for leg (FL,FR,RL,RR)
         """
-        base_orientation = torch.zeros_like(base_orientation)
-        base_orientation[:, -1] = 1
+        # base_orientation = torch.zeros_like(base_orientation)
+        # base_orientation[:, -1] = 1
         delta_phi, residual_angle = delta_phi.to(self.device), residual_angle.to(self.device)
         self.gen_foot_target_position_in_horizontal_hip_frame(delta_phi, residual_xyz, **kwargs)
         self.foot_target_position_in_base_frame = self.transform_to_base_frame(self.foot_target_position_in_hip_frame,

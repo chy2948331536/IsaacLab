@@ -343,14 +343,14 @@ class RewardsCfg:
             "threshold": 0.5,
         },
     )
-    # stumble = RewTerm(func=mdp.stumble,weight=-1.0,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot")})
-    # feet_height = RewTerm(func=mdp.feet_height, weight=-0.5)
+    stumble = RewTerm(func=mdp.stumble,weight=-1.0,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot")})
+    feet_height = RewTerm(func=mdp.feet_height, weight=-0.5,params={"asset_cfg": SceneEntityCfg("robot", body_names=".*foot")})
     # feet_xyz = RewTerm(func=mdp.feet_xyz, weight=-0.5)
-    # delta_phi = RewTerm(func=mdp.delta_phi, weight=-0.5)
-    # residual_angle = RewTerm(func=mdp.residual_angle, weight=-0.5)
-    # feet_slide = RewTerm(func=mdp.feet_slide, weight=-0.5,
-    #                      params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),
-    #                              "asset_cfg": SceneEntityCfg("robot", body_names=".*foot")})
+    delta_phi = RewTerm(func=mdp.delta_phi, weight=-0.5)
+    residual_angle = RewTerm(func=mdp.residual_angle, weight=-0.5)
+    feet_slide = RewTerm(func=mdp.feet_slide, weight=-0.5,
+                         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),
+                                 "asset_cfg": SceneEntityCfg("robot", body_names=".*foot")})
 
 @configclass
 class TerminationsCfg:

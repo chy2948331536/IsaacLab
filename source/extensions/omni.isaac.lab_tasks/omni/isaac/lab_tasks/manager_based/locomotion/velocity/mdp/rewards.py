@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from omni.isaac.lab.assets import Articulation, RigidObject
 from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.sensors import ContactSensor
-from omni.isaac.lab.utils.math import quat_rotate_inverse, yaw_quat
+from omni.isaac.lab.utils.math import quat_rotate_inverse, yaw_quat,quat_rotate
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
@@ -112,16 +112,18 @@ def stumble(env: ManagerBasedRLEnv,sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
     # check if contact force is above threshold
     net_contact_forces = contact_sensor.data.net_forces_w
-    print(torch.norm(net_contact_forces[:, sensor_cfg.body_ids, :2], dim=2).cpu().numpy())
+    # print(torch.norm(net_contact_forces[:, sensor_cfg.body_ids, :2], dim=2).cpu().numpy())
     return torch.any(torch.norm(net_contact_forces[:, sensor_cfg.body_ids, :2], dim=2) > \
                          5 * torch.abs(net_contact_forces[:, sensor_cfg.body_ids, 2]), dim=1)
 
 def feet_height(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     asset: RigidObject = env.scene[asset_cfg.name]
-    # pmtg_term = env.action_manager.get_term("joint_pos_pmtg")
-    # feet_height_error = pmtg_term.pmtg.foot_target_position_in_base_frame[:, :, 2] - (
-    #         asset.data.body_pos_w[:, asset_cfg.body_ids, 2] - asset.data.root_pos_w[:, 2].reshape([-1, 1]))
-    return torch.square(asset.data.root_lin_vel_b[:, 2])
+    pmtg_term = env.action_manager.get_term("joint_pos_pmtg")
+    diff_in_world = (asset.data.body_pos_w[:, asset_cfg.body_ids, :] - asset.data.root_pos_w[:, :].unsqueeze(1).repeat(1, 4, 1)).reshape([-1,3])
+    body_quat_w = asset.data.body_quat_w[:, 0, :].unsqueeze(1).repeat(1,4,1).reshape([-1,4])
+    feet_pos_in_base = quat_rotate_inverse(body_quat_w,diff_in_world).reshape([env.num_envs, 4, 3])
+    error = feet_pos_in_base - pmtg_term.pmtg.foot_target_position_in_base_frame[:, :, :]
+    return torch.sum(error ** 2, dim=(1, 2))
 
 def feet_xyz(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     asset: RigidObject = env.scene[asset_cfg.name]
