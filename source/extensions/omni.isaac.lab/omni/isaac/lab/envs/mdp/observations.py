@@ -36,6 +36,10 @@ def feet_force_z(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg,scale = 0.01) 
     # compute the violation
     return net_contact_forces[:,sensor_cfg.body_ids,2].to(env.device)*scale
 
+def masses_rel(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    return (asset.data.masses-asset.data.default_mass)[:,asset_cfg.body_ids].to(env.device)
+
 def base_pos_z(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root height in the simulation world frame."""
     # extract the used quantities (to enable type-hinting)

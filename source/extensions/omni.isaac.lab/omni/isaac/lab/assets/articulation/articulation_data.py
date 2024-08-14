@@ -45,6 +45,7 @@ class ArticulationData(RigidObjectData):
         # Initialize history for finite differencing
         self._previous_joint_vel = self._root_physx_view.get_dof_velocities().clone()
         self._materials = self._root_physx_view.get_material_properties()
+        self._masses = self._root_physx_view.get_masses()
         # Initialize the lazy buffers.
         self._body_state_w = TimestampedBuffer()
 
@@ -356,3 +357,11 @@ class ArticulationData(RigidObjectData):
     @materials.setter
     def materials(self, value):
         self._materials = value
+
+    @property
+    def masses(self):
+        return self._masses
+    
+    @masses.setter
+    def masses(self, value):
+        self._masses = value

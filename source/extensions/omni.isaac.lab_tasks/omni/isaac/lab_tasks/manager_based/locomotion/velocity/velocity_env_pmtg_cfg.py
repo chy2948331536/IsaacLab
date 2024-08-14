@@ -186,6 +186,7 @@ class ObservationsCfg:
         # observation terms (order preserved)
         materials = ObsTerm(func=mdp.materials, noise=None)
         feet_force_z = ObsTerm(func=mdp.feet_force_z, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),"scale": 0.01})
+        masses_rel = ObsTerm(func=mdp.masses_rel, noise=None,params={"asset_cfg": SceneEntityCfg("robot", body_names="base")})
         def __post_init__(self):
             self.enable_corruption = False
             self.concatenate_terms = True

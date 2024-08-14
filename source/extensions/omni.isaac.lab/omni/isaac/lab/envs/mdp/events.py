@@ -174,7 +174,7 @@ def randomize_rigid_body_mass(
 
     # set the mass into the physics simulation
     asset.root_physx_view.set_masses(masses, env_ids)
-
+    asset.data.masses = masses
 
 def randomize_physics_scene_gravity(
     env: ManagerBasedEnv,
