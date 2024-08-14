@@ -28,7 +28,7 @@ Root state.
 """
 def materials(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     asset: Articulation = env.scene[asset_cfg.name]
-    return asset.data.materials[:,0,:].to(env.device)
+    return asset.data.materials[:,0,:]
 
 def feet_force_z(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg,scale = 0.01) -> torch.Tensor:
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
@@ -38,7 +38,21 @@ def feet_force_z(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg,scale = 0.01) 
 
 def masses_rel(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     asset: Articulation = env.scene[asset_cfg.name]
-    return (asset.data.masses-asset.data.default_mass)[:,asset_cfg.body_ids].to(env.device)
+    return (asset.data.masses-asset.data.default_mass)[:,asset_cfg.body_ids]
+
+def coms(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    return (asset.data.coms)[:,asset_cfg.body_ids,:3].squeeze(1)
+
+def thigh_contact(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    net_contact_forces = contact_sensor.data.net_forces_w
+    return (torch.norm(net_contact_forces[:,sensor_cfg.body_ids,:3],dim=-1) > 0.1).to(env.device)
+
+def calf_contact(env: ManagerBasedEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    net_contact_forces = contact_sensor.data.net_forces_w
+    return (torch.norm(net_contact_forces[:,sensor_cfg.body_ids,:3],dim=-1) > 0.1).to(env.device)
 
 def base_pos_z(env: ManagerBasedEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Root height in the simulation world frame."""

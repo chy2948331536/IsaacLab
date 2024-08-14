@@ -169,14 +169,22 @@ class ObservationsCfg:
         # last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=None)
         # joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=None)
         actions = ObsTerm(func=mdp.last_processed_action, params={"action_name": "joint_pos_pmtg"})
+        
         height_scan = ObsTerm(
             func=mdp.height_scan,
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
             noise=None,
             clip=(-1.0, 1.0),
         )
+
+        materials = ObsTerm(func=mdp.materials, noise=None)
+        feet_force_z = ObsTerm(func=mdp.feet_force_z, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),"scale": 0.01})
+        masses_rel = ObsTerm(func=mdp.masses_rel, noise=None,params={"asset_cfg": SceneEntityCfg("robot", body_names="base")})
+        coms = ObsTerm(func=mdp.coms, noise=None,params={"asset_cfg": SceneEntityCfg("robot", body_names="base")})
+        # thigh_contact = ObsTerm(func=mdp.thigh_contact, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*thigh")})
+        calf_contact = ObsTerm(func=mdp.calf_contact, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*calf")})
         def __post_init__(self):
-            self.enable_corruption = True
+            self.enable_corruption = False
             self.concatenate_terms = True
     # observation groups
     critic: CriticCfg = CriticCfg()
@@ -187,11 +195,28 @@ class ObservationsCfg:
         materials = ObsTerm(func=mdp.materials, noise=None)
         feet_force_z = ObsTerm(func=mdp.feet_force_z, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),"scale": 0.01})
         masses_rel = ObsTerm(func=mdp.masses_rel, noise=None,params={"asset_cfg": SceneEntityCfg("robot", body_names="base")})
+        coms = ObsTerm(func=mdp.coms, noise=None,params={"asset_cfg": SceneEntityCfg("robot", body_names="base")})
+        # thigh_contact = ObsTerm(func=mdp.thigh_contact, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*thigh")})
+        calf_contact = ObsTerm(func=mdp.calf_contact, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*calf")})
         def __post_init__(self):
             self.enable_corruption = False
             self.concatenate_terms = True
     # observation groups
     privilege: PrivilegeCfg = PrivilegeCfg()
+
+    @configclass
+    class HeightCfg(ObsGroup):
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            noise=None,
+            clip=(-1.0, 1.0),
+        )
+        def __post_init__(self):
+            self.enable_corruption = False
+            self.concatenate_terms = True
+    # observation groups
+    heights: HeightCfg = HeightCfg()
 
 @configclass
 class EventCfg:
@@ -203,9 +228,9 @@ class EventCfg:
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
-            "static_friction_range": (0.8, 0.8),
-            "dynamic_friction_range": (0.2, 1.0),
-            "restitution_range": (0.2, 1.0),
+            "static_friction_range": (0.3, 1.0),
+            "dynamic_friction_range": (0.3, 1.0),
+            "restitution_range": (0.3, 1.0),
             "num_buckets": 64,
         },
     )
@@ -216,6 +241,18 @@ class EventCfg:
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="base"),
             "mass_distribution_params": (-5.0, 5.0),
+            "operation": "add",
+        },
+    )
+
+    randomize_base_com = EventTerm(
+        func=mdp.randomize_base_com,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names="base"),
+            "x_range": (-0.05, 0.05),
+            "y_range": (-0.05, 0.05),
+            "z_range": (-0.05, 0.05),
             "operation": "add",
         },
     )

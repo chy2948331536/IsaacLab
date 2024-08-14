@@ -46,6 +46,7 @@ class ArticulationData(RigidObjectData):
         self._previous_joint_vel = self._root_physx_view.get_dof_velocities().clone()
         self._materials = self._root_physx_view.get_material_properties()
         self._masses = self._root_physx_view.get_masses()
+        self._coms = self._root_physx_view.get_coms()
         # Initialize the lazy buffers.
         self._body_state_w = TimestampedBuffer()
 
@@ -365,3 +366,11 @@ class ArticulationData(RigidObjectData):
     @masses.setter
     def masses(self, value):
         self._masses = value
+
+    @property
+    def coms(self):
+        return self._coms
+    
+    @coms.setter
+    def coms(self, value):
+        self._coms = value

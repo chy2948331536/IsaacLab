@@ -188,6 +188,11 @@ class ObservationManager(ManagerBase):
         # if group_name == "privilege":
         #     print(group_obs)
         # concatenate all observations in the group together
+        # print(group_name)
+        # for key, value in group_obs.items():
+        #     if isinstance(value, torch.Tensor):
+        #         print(key,value.to('cpu').numpy())
+        # print()
         if self._group_obs_concatenate[group_name]:
             return torch.cat(list(group_obs.values()), dim=-1)
         else:

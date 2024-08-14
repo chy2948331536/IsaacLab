@@ -125,7 +125,7 @@ def randomize_rigid_body_material(
 
     # apply to simulation
     asset.root_physx_view.set_material_properties(materials, env_ids)
-    asset.data.materials = materials
+    asset.data.materials = materials.to(env.device)
 
 
 def randomize_rigid_body_mass(
@@ -174,7 +174,53 @@ def randomize_rigid_body_mass(
 
     # set the mass into the physics simulation
     asset.root_physx_view.set_masses(masses, env_ids)
-    asset.data.masses = masses
+    asset.data.masses = masses.to(env.device)
+    asset.data.default_mass = asset.data.default_mass.to(env.device)
+
+def randomize_base_com(
+    env: ManagerBasedEnv,
+    env_ids: torch.Tensor | None,
+    asset_cfg: SceneEntityCfg,
+    x_range: tuple[float, float],
+    y_range: tuple[float, float],
+    z_range: tuple[float, float],
+    operation: Literal["add", "scale", "abs"],
+):
+    # extract the used quantities (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    # resolve environment ids
+    if env_ids is None:
+        env_ids = torch.arange(env.scene.num_envs, device="cpu")
+    else:
+        env_ids = env_ids.cpu()
+
+    # resolve body indices
+    if asset_cfg.body_ids == slice(None):
+        body_ids = torch.arange(asset.num_bodies, dtype=torch.int, device="cpu")
+    else:
+        body_ids = torch.tensor(asset_cfg.body_ids, dtype=torch.int, device="cpu")
+
+    # get the current masses of the bodies (num_assets, num_bodies)
+    coms = asset.root_physx_view.get_coms()
+
+    random_offsets = torch.stack([
+        torch.rand(len(env_ids), device="cpu") * (x_range[1] - x_range[0]) + x_range[0],
+        torch.rand(len(env_ids), device="cpu") * (y_range[1] - y_range[0]) + y_range[0],
+        torch.rand(len(env_ids), device="cpu") * (z_range[1] - z_range[0]) + z_range[0]
+    ], dim=-1)
+
+    # apply the operation to the center of mass
+    if operation == "add":
+        coms[env_ids, asset_cfg.body_ids, :3] += random_offsets
+    elif operation == "scale":
+        coms[env_ids, asset_cfg.body_ids, :3] *= random_offsets
+    elif operation == "abs":
+        coms[env_ids, asset_cfg.body_ids, :3] = torch.abs(random_offsets)
+    else:
+        raise ValueError(f"Unsupported operation '{operation}'")
+    asset.root_physx_view.set_coms(coms,env_ids)
+    asset.data.coms = coms.to(env.device)
 
 def randomize_physics_scene_gravity(
     env: ManagerBasedEnv,
