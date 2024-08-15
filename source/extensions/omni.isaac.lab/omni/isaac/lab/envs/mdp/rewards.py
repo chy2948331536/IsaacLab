@@ -19,7 +19,7 @@ from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.managers.manager_base import ManagerTermBase
 from omni.isaac.lab.managers.manager_term_cfg import RewardTermCfg
 from omni.isaac.lab.sensors import ContactSensor
-
+from omni.isaac.lab.sensors import RayCaster
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
@@ -98,18 +98,12 @@ def flat_orientation_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = Scen
 
 
 def base_height_l2(
-    env: ManagerBasedRLEnv, target_height: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-) -> torch.Tensor:
-    """Penalize asset height from its target using L2 squared kernel.
-
-    Note:
-        Currently, it assumes a flat terrain, i.e. the target height is in the world frame.
-    """
-    # extract the used quantities (to enable type-hinting)
+    env: ManagerBasedRLEnv, target_height: float,sensor_cfg: SceneEntityCfg = SceneEntityCfg("height_scanner"), asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     asset: RigidObject = env.scene[asset_cfg.name]
-    # TODO: Fix this for rough-terrain.
-    return torch.square(asset.data.root_pos_w[:, 2] - target_height)
-
+    sensor: RayCaster = env.scene.sensors[sensor_cfg.name]
+    base_height = torch.mean((asset.data.root_pos_w[:, 2].unsqueeze(1) - sensor.data.ray_hits_w[..., 2]), dim=1)
+    base_height_reward = torch.square(base_height - target_height)
+    return base_height_reward
 
 def body_lin_acc_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize the linear acceleration of bodies using L2-kernel."""

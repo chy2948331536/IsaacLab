@@ -19,6 +19,24 @@ class RslRlPpoActorCriticCfg:
     init_noise_std: float = MISSING
     """The initial noise standard deviation for the policy."""
 
+    num_privilege_obs: int = MISSING
+    """The number of privilege observations."""
+
+    num_heights_obs: int = MISSING
+    """The number of heights observations."""
+
+    num_privilege_latent: int = MISSING
+    """The number of privilege latent variables."""
+
+    num_heights_latent: int = MISSING
+    """The number of heights latent variables."""
+
+    privilege_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the privilege network."""
+
+    terrain_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the terrain network."""
+    
     actor_hidden_dims: list[int] = MISSING
     """The hidden dimensions of the actor network."""
 

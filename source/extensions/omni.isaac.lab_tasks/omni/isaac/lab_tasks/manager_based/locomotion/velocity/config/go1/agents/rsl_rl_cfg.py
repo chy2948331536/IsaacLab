@@ -15,17 +15,25 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class UnitreeGo1RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 1500
-    save_interval = 50
+    max_iterations = 10000
+    save_interval = 250
     experiment_name = "unitree_go1_rough"
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
+        class_name= "ActorCriticPMTG",
         init_noise_std=1.0,
-        actor_hidden_dims=[512, 256, 128],
+        num_privilege_obs = 15,
+        num_heights_obs = 88,
+        num_privilege_latent = 5,
+        num_heights_latent = 16,
+        actor_hidden_dims=[256, 128, 64],
         critic_hidden_dims=[512, 256, 128],
+        privilege_hidden_dims=[128, 64],
+        terrain_hidden_dims=[256,128, 64],
         activation="elu",
     )
     algorithm = RslRlPpoAlgorithmCfg(
+        class_name= "PMTGPPO",
         value_loss_coef=1.0,
         use_clipped_value_loss=True,
         clip_param=0.2,
