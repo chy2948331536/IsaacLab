@@ -36,12 +36,14 @@ def feet_air_time(
     """
     # extract the used quantities (to enable type-hinting)
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    term = env.action_manager.get_term("joint_pos_pmtg")
+    threshold = term.pmtg.desire_feet_air_time
     # compute the reward
     first_contact = contact_sensor.compute_first_contact(env.step_dt)[:, sensor_cfg.body_ids]
     last_air_time = contact_sensor.data.last_air_time[:, sensor_cfg.body_ids]
-    reward = torch.sum((last_air_time - threshold) * first_contact, dim=1)
+    reward = torch.sum((last_air_time - threshold) * first_contact, dim=1).clip(max=0.1)
     # no reward for zero command
-    reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
+    # reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > 0.1
     return reward
 
 
@@ -135,6 +137,18 @@ def delta_phi(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg(
     return delta_phi_norm
 
 def residual_angle(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    asset: RigidObject = env.scene[asset_cfg.name]
+    base_quat = asset.data.root_quat_w
+    base_quat = base_quat[:, [1, 2, 3, 0]]
+
     pmtg_term = env.action_manager.get_term("joint_pos_pmtg")
-    residual_angle_norm = torch.norm(pmtg_term.residual_angle, dim=-1)
+    origin_angles = pmtg_term.pmtg.get_origin_action(base_quat)
+    residual_angle_norm = torch.norm((origin_angles - asset.data.joint_pos), dim=-1)
     return residual_angle_norm
+
+def target_smoothness(env: ManagerBasedRLEnv,asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    pmtg_term = env.action_manager.get_term("joint_pos_pmtg")
+    # Penalize changes in actions
+    return torch.sum(torch.square(pmtg_term.last_processed_actions - pmtg_term.processed_actions) +
+                        torch.square(pmtg_term.processed_actions - 2 * pmtg_term.last_processed_actions + pmtg_term.last_last_processed_actions),
+                        dim=1)

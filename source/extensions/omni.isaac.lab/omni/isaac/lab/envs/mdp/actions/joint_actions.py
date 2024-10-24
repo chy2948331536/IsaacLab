@@ -72,6 +72,8 @@ class JointAction(ActionTerm):
         # create tensors for raw and processed actions
         self._raw_actions = torch.zeros(self.num_envs, self.pmtg_action_dim, device=self.device)
         self._processed_actions = torch.zeros(self.num_envs, self._num_joints, device=self.device)
+        self._last_processed_actions = torch.zeros(self.num_envs, self._num_joints, device=self.device)
+        self._last_last_processed_actions = torch.zeros(self.num_envs, self._num_joints, device=self.device)
 
         # parse scale
         if isinstance(cfg.scale, (float, int)):
@@ -147,13 +149,13 @@ class JointPMTGPositionAction(JointAction):
     def action_dim(self) -> int:
         return self.pmtg_action_dim
 
-    # @property
-    # def raw_actions(self) -> torch.Tensor:
-    #     return self._raw_actions
+    @property
+    def last_processed_actions(self) -> torch.Tensor:
+        return self._last_processed_actions
 
-    # @property
-    # def processed_actions(self) -> torch.Tensor:
-    #     return self._processed_actions
+    @property
+    def last_last_processed_actions(self) -> torch.Tensor:
+        return self._last_last_processed_actions
 
     cfg: actions_cfg.JointPositionPMTGActionCfg
     """The configuration of the action term."""
@@ -164,8 +166,8 @@ class JointPMTGPositionAction(JointAction):
         z_updown_height_func = ["cubic_up", "cubic_down"]
         max_horizontal_offset = 0.0
         train_mode = True
-        duty_factor = 0.6
-        base_frequency = 1.5
+        duty_factor = 0.5
+        base_frequency = 1.25
         max_clearance = 0.09
         body_height = 0.327
         stand_after_walk = False
@@ -175,6 +177,8 @@ class JointPMTGPositionAction(JointAction):
 
     def process_actions(self, actions: torch.Tensor):
         # store the raw actions
+        self._last_last_processed_actions = self._last_processed_actions
+        self._last_processed_actions = self._processed_actions
         self._raw_actions[:] = actions
         self.delta_phi = actions[:, :4]
         self.residual_angle = actions[:, 4:]
@@ -189,7 +193,9 @@ class JointPMTGPositionAction(JointAction):
                                                self.base_quat,
                                                command=None)
         # apply the affine transformations
-        self._processed_actions = pmtg_joints
+        #set_default
+        self._processed_actions = self.default_joint_pos
+        # self._processed_actions = pmtg_joints
         # print(self._env.sim.current_time)
 
     def __init__(self, cfg: actions_cfg.JointPositionActionCfg, env: ManagerBasedEnv):
@@ -207,6 +213,7 @@ class JointPMTGPositionAction(JointAction):
                                           device=self._env.device,
                                           param=self.pmtg_cfg,
                                           task_name=self._env.scene.cfg.robot.spawn.usd_path)
+        self.default_joint_pos = torch.tensor([[0.1, -0.1, 0.1,-0.1,0.8,0.8,1.0,1.0,-1.5,-1.5,-1.5,-1.5]], device=self.device, requires_grad=False).repeat(self.num_envs, 1)
 
     def apply_actions(self):
         # set position targets

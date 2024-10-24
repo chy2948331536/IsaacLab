@@ -164,6 +164,7 @@ class PMTrajectoryGenerator:
         self.end_one_walk_time = torch.zeros(self.num_envs, 1, dtype=torch.float, device=self.device)
         self.begin_walk_threshold = 0.03
         self.stand_after_walk = param.stand_after_walk#CONFIG
+        self.desire_feet_air_time = (1/self.base_frequency)*(1-self.duty_factor)
     def gen_func(self, func_name):
         """
         Generate a lambda function based on the provided function name.

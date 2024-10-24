@@ -97,7 +97,7 @@ def main():
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
-            actions = policy(obs)
+            actions,privilege_latent,terrain_latent = policy(obs)
             # env stepping
             obs, _, _, _ = env.step(actions)
             # obs, _, _, _ = env.step(actions)

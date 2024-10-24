@@ -140,7 +140,8 @@ class ObservationsCfg:
         joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
         # last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=None)
         # joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=None)
-        actions = ObsTerm(func=mdp.last_processed_action, params={"action_name": "joint_pos_pmtg"})
+        actions = ObsTerm(func=mdp.processed_action, params={"term_name": "joint_pos_pmtg"})
+        pmtg_phase = ObsTerm(func=mdp.pmtg_phase, params={"term_name": "joint_pos_pmtg"})
 
         # observation terms (order preserved)
         materials = ObsTerm(func=mdp.materials, noise=None)
@@ -183,14 +184,8 @@ class ObservationsCfg:
         joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-1.5, n_max=1.5))
         # last_joint_vel = ObsTerm(func=mdp.last_joint_vel, noise=None)
         # joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=None)
-        actions = ObsTerm(func=mdp.last_processed_action, params={"action_name": "joint_pos_pmtg"})
-        
-        height_scan = ObsTerm(
-            func=mdp.height_scan,
-            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
-            noise=None,
-            clip=(-1.0, 1.0),
-        )
+        actions = ObsTerm(func=mdp.processed_action, params={"term_name": "joint_pos_pmtg"})
+        pmtg_phase = ObsTerm(func=mdp.pmtg_phase, params={"term_name": "joint_pos_pmtg"})
 
         materials = ObsTerm(func=mdp.materials, noise=None)
         feet_force_z = ObsTerm(func=mdp.feet_force_z, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),"scale": 0.01})
@@ -198,6 +193,13 @@ class ObservationsCfg:
         coms = ObsTerm(func=mdp.coms, noise=None,params={"asset_cfg": SceneEntityCfg("robot", body_names="base")})
         # thigh_contact = ObsTerm(func=mdp.thigh_contact, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*thigh")})
         calf_contact = ObsTerm(func=mdp.calf_contact, noise=None,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*calf")})
+
+        height_scan = ObsTerm(
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            noise=None,
+            clip=(-1.0, 1.0),
+        )
         def __post_init__(self):
             self.enable_corruption = False
             self.concatenate_terms = True
@@ -331,12 +333,13 @@ class RewardsCfg:
     # -- penalties
     lin_vel_z_l2 = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
     #base_acc
-    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.5)
+    ang_vel_xy_l2 = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
     flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-2.0)
-    base_height_l2 = RewTerm(func=mdp.base_height_l2, weight=-2.0)  #要修改为雷达
+    base_height_l2 = RewTerm(func=mdp.base_height_l2, weight=-5.0)  #要修改为雷达
     dof_torques_l2 = RewTerm(func=mdp.joint_torques_l2, weight=-1.0e-5)
     dof_acc_l2 = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
+    target_smoothness = RewTerm(func=mdp.target_smoothness, weight=-0.01)
     undesired_contacts_thigh = RewTerm(
         func=mdp.undesired_contacts,
         weight=-1.0,
@@ -351,7 +354,7 @@ class RewardsCfg:
     dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-10.0)
     feet_air_time = RewTerm(
         func=mdp.feet_air_time,
-        weight=1.0,
+        weight=2.0,
         params={
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),
             "command_name": "base_velocity",
@@ -359,10 +362,10 @@ class RewardsCfg:
         },
     )
     stumble = RewTerm(func=mdp.stumble,weight=-1.0,params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot")})
-    feet_height = RewTerm(func=mdp.feet_height, weight=-1.2,params={"asset_cfg": SceneEntityCfg("robot", body_names=".*foot")})
+    feet_height = RewTerm(func=mdp.feet_height, weight=-0.0,params={"asset_cfg": SceneEntityCfg("robot", body_names=".*foot")})
     # feet_xyz = RewTerm(func=mdp.feet_xyz, weight=-0.5)
-    delta_phi = RewTerm(func=mdp.delta_phi, weight=-0.1)
-    residual_angle = RewTerm(func=mdp.residual_angle, weight=-0.1)
+    # delta_phi = RewTerm(func=mdp.delta_phi, weight=-0.1)
+    # residual_angle = RewTerm(func=mdp.residual_angle, weight=-1.0)
     feet_slide = RewTerm(func=mdp.feet_slide, weight=-0.1,
                          params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*foot"),
                                  "asset_cfg": SceneEntityCfg("robot", body_names=".*foot")})

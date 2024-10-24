@@ -165,6 +165,7 @@ class ActuatorNetMLP(DCMotor):
         # -- velocity
         vel_input = torch.cat([self._joint_vel_history[:, i].unsqueeze(2) for i in self.cfg.input_idx], dim=2)
         vel_input = vel_input.view(self._num_envs * self.num_joints, -1)
+        print(vel_input)
         # -- scale and concatenate inputs
         if self.cfg.input_order == "pos_vel":
             network_input = torch.cat([pos_input * self.cfg.pos_scale, vel_input * self.cfg.vel_scale], dim=1)

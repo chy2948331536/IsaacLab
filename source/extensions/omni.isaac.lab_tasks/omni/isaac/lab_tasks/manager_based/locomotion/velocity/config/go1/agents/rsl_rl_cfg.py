@@ -24,7 +24,7 @@ class UnitreeGo1RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         init_noise_std=1.0,
         num_privilege_obs = 15,
         num_heights_obs = 88,
-        num_privilege_latent = 5,
+        num_privilege_latent = 10,
         num_heights_latent = 16,
         actor_hidden_dims=[256, 128, 64],
         critic_hidden_dims=[512, 256, 128],

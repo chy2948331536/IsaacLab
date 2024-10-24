@@ -27,7 +27,8 @@ from omni.isaac.lab.utils.assets import ISAACLAB_NUCLEUS_DIR
 
 GO1_ACTUATOR_CFG = ActuatorNetMLPCfg(
     joint_names_expr=[".*_hip_joint", ".*_thigh_joint", ".*_calf_joint"],
-    network_file=f"{ISAACLAB_NUCLEUS_DIR}/ActuatorNets/Unitree/unitree_go1.pt",
+    # network_file=f"{ISAACLAB_NUCLEUS_DIR}/ActuatorNets/Unitree/unitree_go1.pt",
+    network_file=f"source/extensions/omni.isaac.lab/omni/isaac/lab/actuators/unitree_go1.pt",
     pos_scale=-1.0,
     vel_scale=1.0,
     torque_scale=1.0,
